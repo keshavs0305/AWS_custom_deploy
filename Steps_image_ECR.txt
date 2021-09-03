@@ -1,0 +1,44 @@
+1)from the root folder run the below command for creating an image
+docker build -t <imagename>:<version number> .
+eg: docker build -t licensedetect:v1 .
+("C:\Program Files\Docker\Docker\DockerCli.exe" -SwitchDaemon)
+
+2)Now run the below command to configure aws cli(AWS cli have to be installed first)
+  aws configure
+it will ask certain questions as below. Provide the information. The below is just for reference:
+AWS Access Key ID: AKIA6QICA7SI2GBNDSEE
+AWS Secret Access Key: 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
+Default region name :ap-south-1
+Default output format: text
+
+3) once configured now you have to Retrieve an authentication token and authenticate your Docker client to your registry
+
+aws ecr get-login-password --region ap-south-1 | docker login --username AWS --password-stdin 996973542545.dkr.ecr.ap-south-1.amazonaws.com
+[check the last part make sure the account id is correct. last part corresponds to ${account}.dkr.ecr.${region}.amazonaws.com]
+
+4) tag your image so you can push the image to this repository
+docker tag licensedetect:latest 996973542545.dkr.ecr.ap-south-1.amazonaws.com/licensedetect:latest
+
+5)push this image to your newly created AWS repository
+docker push 996973542545.dkr.ecr.ap-south-1.amazonaws.com/licensedetect:latest
+
+						OR
+
+ you can directly use the build_and push.sh file as below
+./build_and_push.sh <image-name>
+eg: /build_and_push.sh licensedetect
+This script will create private repo in ECR, build the image and push it to ECR. However there is one step that is missing here. Docker login is missing as in Step 3.
+So for that you need to update the script to account for step 3 or you need to do that manually.
+
+Test in local:
+Step to verify the after building the image locally:
+run the below command and invoke the endpoint from postman:
+ 
+docker run --publish 8080:8080 <image:name> python serve
+
+check in postman: http://localhost:8080/ping GET
+                  http://localhost:8080/invocations  POST
+
+[Note: while running the above command it starts the gunicorn server with nginx as reverse proxy. Also it will starts the worker thread depending on your cpu cores.
+Make sure to set the cpu_count to 2 in serve file while testing in local as otherwise it will slows you system.]				  
+  
